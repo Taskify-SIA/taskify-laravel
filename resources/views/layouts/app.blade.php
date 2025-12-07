@@ -174,14 +174,11 @@
                     <img src="{{ Auth::user()->profile_photo_url }}" alt="User" class="w-10 h-10 rounded-full border-2 border-white dark:border-gray-600 shadow-sm">
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ Auth::user()->name }}</p>
-                        <p class="text-xs text-gray-400 truncate">Pro Member</p>
+                        <p class="text-xs text-gray-400 truncate">{{ Auth::user()->email }}</p>
                     </div>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="text-gray-400 hover:text-red-500 trans-all">
-                            <i class="ph-bold ph-sign-out text-lg"></i>
-                        </button>
-                    </form>
+                    <button type="button" onclick="openLogoutModal()" class="text-gray-400 hover:text-red-500 trans-all">
+                        <i class="ph-bold ph-sign-out text-lg"></i>
+                    </button>
                 </div>
             </div>
         </aside>
@@ -264,6 +261,13 @@
             }
         }
     </script>
+    
+    {{-- Toast Notifications --}}
+    @include('components.toast-notification')
+    
+    {{-- Logout Modal --}}
+    @include('components.modal-logout')
+    
     @stack('scripts')
 </body>
 </html>

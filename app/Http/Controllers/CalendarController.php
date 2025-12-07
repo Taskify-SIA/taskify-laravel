@@ -11,10 +11,13 @@ class CalendarController extends Controller
 {
     public function index(Request $request)
     {
-        $year = $request->get('year', Carbon::now()->year);
-        $month = $request->get('month', Carbon::now()->month);
+        // Set timezone to Asia/Jakarta
+        $now = Carbon::now()->timezone('Asia/Jakarta');
         
-        $currentDate = Carbon::createFromDate($year, $month, 1);
+        $year = $request->get('year', $now->year);
+        $month = $request->get('month', $now->month);
+        
+        $currentDate = Carbon::createFromDate($year, $month, 1)->timezone('Asia/Jakarta');
         $startOfMonth = $currentDate->copy()->startOfMonth();
         $endOfMonth = $currentDate->copy()->endOfMonth();
         
@@ -30,7 +33,7 @@ class CalendarController extends Controller
             $calendarDays[] = [
                 'date' => $currentDay->copy(),
                 'isCurrentMonth' => $currentDay->month == $month,
-                'isToday' => $currentDay->isToday(),
+                'isToday' => $currentDay->isSameDay($now), // Use isSameDay for accurate comparison
                 'dayNumber' => $currentDay->day
             ];
             $currentDay->addDay();

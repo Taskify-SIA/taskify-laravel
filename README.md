@@ -242,7 +242,7 @@ npm install
 
 6. Jalankan migrasi database:
 ```bash
-php artisan migrate
+php artisan migrate --seed
 ```
 
 7. Build aset frontend:
@@ -297,6 +297,8 @@ npm run build
 
 ## 📄 Lisensi
 
-MIT License
+Lisensi lengkap dapat dilihat di file [LICENSE](LICENSE) yang disertakan dalam proyek ini.
+
+[MIT License](LICENSE)
 
 Copyright (c) 2025 Taskify
