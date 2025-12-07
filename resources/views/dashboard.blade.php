@@ -89,14 +89,14 @@
     <div class="space-y-8">
         <div class="bg-primary-500 text-white p-8 rounded-[2rem] shadow-glow relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-            <h3 class="text-lg font-bold relative z-10">{{ now()->format('F Y') }}</h3>
+            <h3 class="text-lg font-bold relative z-10">{{ now()->timezone('Asia/Jakarta')->format('F Y') }}</h3>
             <div class="grid grid-cols-7 text-center text-xs opacity-70 mt-4 mb-2">
                 <div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div><div>M</div>
             </div>
             <div class="grid grid-cols-7 text-center gap-2 text-sm relative z-10">
                 @php
-                    $startOfMonth = now()->startOfMonth();
-                    $endOfMonth = now()->endOfMonth();
+                    $startOfMonth = now()->timezone('Asia/Jakarta')->startOfMonth();
+                    $endOfMonth = now()->timezone('Asia/Jakarta')->endOfMonth();
                     $startDay = $startOfMonth->dayOfWeek;
                     $daysInMonth = $endOfMonth->day;
                 @endphp
@@ -106,7 +106,7 @@
                 @endfor
                 
                 @for($day = 1; $day <= $daysInMonth; $day++)
-                    <div class="{{ $day == now()->day ? 'bg-white text-primary-600 rounded-lg shadow-md' : '' }}">
+                    <div class="{{ $day == now()->timezone('Asia/Jakarta')->day ? 'bg-white text-primary-600 rounded-lg shadow-md' : '' }}">
                         {{ $day }}
                     </div>
                 @endfor
@@ -140,7 +140,7 @@
         let gradient = ctx.createLinearGradient(0, 0, 0, 300);
         gradient.addColorStop(0, 'rgba(73, 0, 199, 0.4)');
         gradient.addColorStop(1, 'rgba(73, 0, 199, 0)');
-
+        
         const config = {
             type: 'line',
             data: {

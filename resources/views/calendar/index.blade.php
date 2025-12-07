@@ -31,7 +31,7 @@
             {{ $currentDate->format('F Y') }}
         </h2>
         <div class="flex gap-2">
-            <a href="{{ route('calendar.index', ['year' => now()->year, 'month' => now()->month]) }}" 
+            <a href="{{ route('calendar.index', ['year' => now()->timezone('Asia/Jakarta')->year, 'month' => now()->timezone('Asia/Jakarta')->month]) }}" 
                class="px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-white font-medium trans-all">
                 Today
             </a>
@@ -99,7 +99,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         @php
             $upcomingTasks = Auth::user()->tasks()
-                ->where('due_date', '>=', now())
+                ->where('due_date', '>=', now()->timezone('Asia/Jakarta'))
                 ->orderBy('due_date', 'asc')
                 ->limit(6)
                 ->get();

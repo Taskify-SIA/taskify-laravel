@@ -14,6 +14,9 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
+        // Set timezone to Asia/Jakarta
+        $now = Carbon::now()->timezone('Asia/Jakarta');
+        
         $totalTasks = Task::where('user_id', $user->id)->count();
         $inProgressTasks = Task::where('user_id', $user->id)
             ->where('status', 'in_progress')
@@ -39,7 +42,7 @@ class DashboardController extends Controller
         $chartLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
         
         for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
+            $date = $now->copy()->subDays($i);
             $count = Task::where('user_id', $user->id)
                 ->where('is_completed', true)
                 ->whereDate('updated_at', $date)
