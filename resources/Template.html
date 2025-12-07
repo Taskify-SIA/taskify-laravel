@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taskify - Premium Task Management</title>
+    
+    <!-- Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            DEFAULT: '#4900c7',
+                            50: '#f2eaff',
+                            100: '#e0cfff',
+                            200: '#c5a3ff',
+                            300: '#a36dff',
+                            400: '#7d33ff',
+                            500: '#4900c7',
+                            600: '#4200b3',
+                            700: '#380099',
+                            800: '#2e0080',
+                            900: '#260066',
+                        },
+                        dark: {
+                            bg: '#0f172a',
+                            card: '#1e293b',
+                            text: '#f1f5f9',
+                            muted: '#94a3b8'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(73, 0, 199, 0.05)',
+                        'glow': '0 0 15px rgba(73, 0, 199, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .trans-all { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .custom-checkbox input:checked + div {
+            background-color: #4900c7; border-color: #4900c7;
+        }
+        .custom-checkbox input:checked + div svg { display: block; }
+
+        /* Animation for page switching */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-dark-bg dark:text-dark-text transition-colors duration-300 font-sans antialiased overflow-hidden">
+
+    <div class="flex h-screen w-full relative">
+
+        <!-- OVERLAY MOBILE -->
+        <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden backdrop-blur-sm trans-all opacity-0" onclick="toggleSidebar()"></div>
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="absolute lg:relative z-30 w-72 h-full bg-white dark:bg-dark-card flex flex-col justify-between border-r border-gray-100 dark:border-gray-800 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 shadow-xl lg:shadow-none">
+            
+            <div class="p-8 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center text-white shadow-glow">
+                    <i class="ph-bold ph-squares-four text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Taskify<span class="text-primary-500">.</span></h1>
+            </div>
+
+            <!-- Navigation Links with ID -->
+            <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Menu Utama</p>
+                
+                <a href="#" onclick="switchPage('dashboard', this)" id="nav-dashboard" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400 font-medium trans-all">
+                    <i class="ph-duotone ph-circles-four text-xl"></i>
+                    Dashboard
+                </a>
+                <a href="#" onclick="switchPage('tasks', this)" id="nav-tasks" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 font-medium trans-all group">
+                    <i class="ph-duotone ph-check-circle text-xl group-hover:scale-110 trans-all"></i>
+                    Tugas Saya
+                    <span class="ml-auto bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300 text-[10px] px-2 py-0.5 rounded-full font-bold">8</span>
+                </a>
+                <a href="#" onclick="switchPage('calendar', this)" id="nav-calendar" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 font-medium trans-all group">
+                    <i class="ph-duotone ph-calendar-blank text-xl group-hover:scale-110 trans-all"></i>
+                    Kalender
+                </a>
+                <a href="#" onclick="switchPage('analytics', this)" id="nav-analytics" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 font-medium trans-all group">
+                    <i class="ph-duotone ph-chart-pie-slice text-xl group-hover:scale-110 trans-all"></i>
+                    Analitik
+                </a>
+                
+                <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-8">Lainnya</p>
+                
+                <a href="#" onclick="switchPage('team', this)" id="nav-team" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 font-medium trans-all group">
+                    <i class="ph-duotone ph-users text-xl group-hover:scale-110 trans-all"></i>
+                    Tim
+                </a>
+                <a href="#" onclick="switchPage('settings', this)" id="nav-settings" class="nav-item flex items-center gap-3 px-4 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 font-medium trans-all group">
+                    <i class="ph-duotone ph-gear text-xl group-hover:scale-110 trans-all"></i>
+                    Pengaturan
+                </a>
+            </nav>
+
+            <div class="p-6 border-t border-gray-100 dark:border-gray-800">
+                <div class="flex items-center gap-4 bg-gray-50 dark:bg-gray-800 p-3 rounded-2xl border border-gray-100 dark:border-gray-700">
+                    <img src="https://ui-avatars.com/api/?name=Dimas+Rizky&background=4900c7&color=fff" alt="User" class="w-10 h-10 rounded-full border-2 border-white dark:border-gray-600 shadow-sm">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate">Dimas Rizky</p>
+                        <p class="text-xs text-gray-400 truncate">Pro Member</p>
+                    </div>
+                    <button class="text-gray-400 hover:text-red-500 trans-all">
+                        <i class="ph-bold ph-sign-out text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
+            
+            <!-- Mobile Header -->
+            <header class="lg:hidden flex items-center justify-between p-6 pb-2">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="py-2 px-3 rounded-xl bg-white dark:bg-dark-card shadow-sm border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300">
+                        <i class="ph-bold ph-list text-xl"></i>
+                    </button>
+                    <h2 id="mobile-page-title" class="text-xl font-bold dark:text-white">Dashboard</h2>
+                </div>
+                <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-500">
+                    <img src="https://ui-avatars.com/api/?name=Dimas+Rizky&background=4900c7&color=fff" alt="User">
+                </div>
+            </header>
+
+            <div class="p-6 lg:p-10 max-w-8xl mx-auto">
+                
+                <!-- TOP BAR (Common for all pages) -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+                    <div id="header-content">
+                        <!-- Dynamic content via JS -->
+                        <h2 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Halo, Dimas! 👋</h2>
+                        <p class="text-gray-500 dark:text-dark-muted mt-1">Berikut ringkasan aktivitas produktivitas Anda hari ini.</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleDarkMode()" class="px-4 py-3 rounded-2xl bg-white dark:bg-dark-card shadow-soft border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary-500 trans-all">
+                            <i id="themeIcon" class="ph-bold ph-moon"></i>
+                        </button>
+                        
+                        <button class="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-4 lg:px-4 py-3 rounded-2xl font-semibold shadow-glow trans-all transform hover:-translate-y-1">
+                            <i class="ph-bold ph-plus"></i>
+                            <span class="hidden sm:inline">Tugas Baru</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ================= PAGE CONTENT SECTIONS ================= -->
+
+                <!-- 1. DASHBOARD PAGE -->
+                <section id="page-dashboard" class="page-section animate-fade-in">
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800 flex items-center gap-5 group hover:border-primary-200 dark:hover:border-primary-900 trans-all">
+                            <div class="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 group-hover:scale-110 trans-all">
+                                <i class="ph-duotone ph-list-checks text-3xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Tugas</p>
+                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">24</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800 flex items-center gap-5 group hover:border-primary-200 dark:hover:border-primary-900 trans-all">
+                            <div class="w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 group-hover:scale-110 trans-all">
+                                <i class="ph-duotone ph-clock-countdown text-3xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Sedang Berjalan</p>
+                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">8</h3>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800 flex items-center gap-5 group hover:border-primary-200 dark:hover:border-primary-900 trans-all">
+                            <div class="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-500/10 flex items-center justify-center text-primary-500 group-hover:scale-110 trans-all">
+                                <i class="ph-duotone ph-trophy text-3xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Selesai</p>
+                                <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">12</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                        <div class="xl:col-span-2 space-y-8">
+                            <div class="bg-white dark:bg-dark-card p-8 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Progres Analitik</h3>
+                                <div class="h-[250px] w-full"><canvas id="productivityChart"></canvas></div>
+                            </div>
+                            <!-- Simple Task List -->
+                            <div class="bg-white dark:bg-dark-card p-8 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Tugas Terbaru</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                                        <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-4"><i class="ph-bold ph-warning"></i></div>
+                                        <div><h4 class="font-bold dark:text-white">Redesain Homepage</h4><p class="text-xs text-gray-500">Deadline: Hari ini</p></div>
+                                    </div>
+                                    <div class="flex items-center p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-4"><i class="ph-bold ph-file-text"></i></div>
+                                        <div><h4 class="font-bold dark:text-white">Laporan Bulanan</h4><p class="text-xs text-gray-500">Deadline: Besok</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Mini Calendar & Activity -->
+                        <div class="space-y-8">
+                            <div class="bg-primary-500 text-white p-8 rounded-[2rem] shadow-glow relative overflow-hidden">
+                                <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+                                <h3 class="text-lg font-bold relative z-10">Desember 2024</h3>
+                                <div class="grid grid-cols-7 text-center text-xs opacity-70 mt-4 mb-2"><div>S</div><div>S</div><div>R</div><div>K</div><div>J</div><div>S</div><div>M</div></div>
+                                <div class="grid grid-cols-7 text-center gap-2 text-sm relative z-10"><div class="opacity-30">29</div><div class="opacity-30">30</div><div>1</div><div>2</div><div class="bg-white text-primary-600 rounded-lg shadow-md">3</div><div>4</div><div>5</div></div>
+                            </div>
+                            <div class="bg-white dark:bg-dark-card p-8 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800">
+                                <h3 class="font-bold text-gray-900 dark:text-white mb-4">Aktivitas</h3>
+                                <div class="space-y-4 text-sm text-gray-500 dark:text-gray-400">
+                                    <p>• <strong class="text-gray-800 dark:text-gray-200">Dimas</strong> upload file baru.</p>
+                                    <p>• Task "Desain" selesai.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. TASKS PAGE -->
+                <section id="page-tasks" class="page-section hidden animate-fade-in">
+                    <div class="bg-white dark:bg-dark-card p-1 rounded-2xl inline-flex mb-8 border border-gray-100 dark:border-gray-700">
+                        <button class="px-6 py-2 rounded-xl bg-primary-500 text-white text-sm font-bold shadow-md">Semua</button>
+                        <button class="px-6 py-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary-500 text-sm font-medium">Pending</button>
+                        <button class="px-6 py-2 rounded-xl text-gray-500 dark:text-gray-400 hover:text-primary-500 text-sm font-medium">Selesai</button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Task Item Complex -->
+                        <div class="flex flex-col md:flex-row md:items-center p-6 rounded-[2rem] bg-white dark:bg-dark-card border border-gray-100 dark:border-gray-800 shadow-soft group hover:border-primary-200 dark:hover:border-primary-900 trans-all">
+                            <label class="custom-checkbox flex items-center cursor-pointer mb-4 md:mb-0">
+                                <input type="checkbox" class="sr-only">
+                                <div class="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center transition-colors"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+                            </label>
+                            <div class="ml-0 md:ml-6 flex-1">
+                                <h4 class="text-lg font-bold text-gray-900 dark:text-white">Siapkan Presentasi Q4</h4>
+                                <p class="text-gray-500 text-sm mt-1">Mengumpulkan data dari tim sales dan marketing.</p>
+                                <div class="flex items-center gap-4 mt-3">
+                                    <div class="flex -space-x-2">
+                                        <img class="w-8 h-8 rounded-full border-2 border-white dark:border-dark-card" src="https://ui-avatars.com/api/?name=Ali&bg=random" alt="">
+                                        <img class="w-8 h-8 rounded-full border-2 border-white dark:border-dark-card" src="https://ui-avatars.com/api/?name=Budi&bg=random" alt="">
+                                    </div>
+                                    <span class="text-xs font-semibold text-orange-500 bg-orange-50 dark:bg-orange-900/20 px-3 py-1 rounded-lg">In Progress</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 md:mt-0 text-right">
+                                <p class="text-sm font-bold text-gray-900 dark:text-white">Besok</p>
+                                <p class="text-xs text-gray-400">14:00 PM</p>
+                            </div>
+                        </div>
+
+                         <div class="flex flex-col md:flex-row md:items-center p-6 rounded-[2rem] bg-white dark:bg-dark-card border border-gray-100 dark:border-gray-800 shadow-soft group hover:border-primary-200 dark:hover:border-primary-900 trans-all">
+                            <label class="custom-checkbox flex items-center cursor-pointer mb-4 md:mb-0">
+                                <input type="checkbox" class="sr-only">
+                                <div class="w-6 h-6 border-2 border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center transition-colors"><svg class="w-3 h-3 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></div>
+                            </label>
+                            <div class="ml-0 md:ml-6 flex-1">
+                                <h4 class="text-lg font-bold text-gray-900 dark:text-white">Update Server</h4>
+                                <p class="text-gray-500 text-sm mt-1">Maintenance rutin bulanan dan patch security.</p>
+                                <div class="flex items-center gap-4 mt-3">
+                                    <span class="text-xs font-semibold text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-1 rounded-lg">High Priority</span>
+                                </div>
+                            </div>
+                             <div class="mt-4 md:mt-0 text-right">
+                                <p class="text-sm font-bold text-gray-900 dark:text-white">Hari Ini</p>
+                                <p class="text-xs text-gray-400">23:00 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. CALENDAR PAGE -->
+                <section id="page-calendar" class="page-section hidden animate-fade-in">
+                    <div class="bg-white dark:bg-dark-card rounded-[2rem] p-8 shadow-soft border border-gray-100 dark:border-gray-800">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-2xl font-bold dark:text-white">Desember 2024</h2>
+                            <div class="flex gap-2">
+                                <button class="px-4 py-2 rounded-xl border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-white">Today</button>
+                                <div class="flex bg-gray-100 dark:bg-gray-700 rounded-xl">
+                                    <button class="px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-l-xl dark:text-white"><i class="ph-bold ph-caret-left"></i></button>
+                                    <button class="px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-r-xl dark:text-white"><i class="ph-bold ph-caret-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Calendar Grid Mockup -->
+                        <div class="grid grid-cols-7 border-b dark:border-gray-700 pb-4 mb-4 text-center font-bold text-gray-500">
+                            <div>Sen</div><div>Sel</div><div>Rab</div><div>Kam</div><div>Jum</div><div>Sab</div><div>Min</div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-4 text-center h-[500px]">
+                            <!-- Empty/Prev Month -->
+                            <div class="p-2 text-gray-300">29</div><div class="p-2 text-gray-300">30</div>
+                            <!-- Days -->
+                            <div class="p-2 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl cursor-pointer">1</div>
+                            <div class="p-2 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl cursor-pointer">2</div>
+                            <div class="p-2 bg-primary-500 text-white rounded-xl shadow-glow cursor-pointer relative">
+                                3
+                                <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>
+                            </div>
+                            <div class="p-2 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl cursor-pointer relative">
+                                4
+                                <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary-500 rounded-full"></div>
+                            </div>
+                            <div class="p-2 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl cursor-pointer">5</div>
+                            <!-- ... more cells ... -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. ANALYTICS PAGE -->
+                <section id="page-analytics" class="page-section hidden animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-white dark:bg-dark-card p-8 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800">
+                            <h3 class="text-lg font-bold mb-4 dark:text-white">Penyelesaian Tugas</h3>
+                            <div class="h-64 flex items-center justify-center text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                                Chart Placeholder 1
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-dark-card p-8 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800">
+                            <h3 class="text-lg font-bold mb-4 dark:text-white">Efisiensi Tim</h3>
+                            <div class="h-64 flex items-center justify-center text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                                Chart Placeholder 2
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. TEAM PAGE -->
+                <section id="page-team" class="page-section hidden animate-fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Member Card -->
+                        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800 text-center">
+                            <img src="https://ui-avatars.com/api/?name=Dimas+Rizky&background=4900c7&color=fff" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-primary-50 dark:border-gray-700">
+                            <h3 class="text-lg font-bold dark:text-white">Dimas Rizky</h3>
+                            <p class="text-primary-500 text-sm font-medium mb-4">Project Manager</p>
+                            <div class="flex justify-center gap-2">
+                                <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><i class="ph-bold ph-envelope"></i></button>
+                                <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><i class="ph-bold ph-phone"></i></button>
+                            </div>
+                        </div>
+                        <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800 text-center">
+                             <img src="https://ui-avatars.com/api/?name=Sarah+J&background=random" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-gray-50 dark:border-gray-700">
+                            <h3 class="text-lg font-bold dark:text-white">Sarah Jenkins</h3>
+                            <p class="text-gray-500 text-sm font-medium mb-4">UI/UX Designer</p>
+                             <div class="flex justify-center gap-2">
+                                <button class="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"><i class="ph-bold ph-envelope"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. SETTINGS PAGE -->
+                <section id="page-settings" class="page-section hidden animate-fade-in">
+                    <div class="bg-white dark:bg-dark-card p-8 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800 max-w-2xl">
+                        <h3 class="text-xl font-bold dark:text-white mb-6">Pengaturan Profil</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nama Lengkap</label>
+                                <input type="text" value="Dimas Rizky" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-transparent focus:border-primary-500 focus:ring-0 text-gray-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                                <input type="email" value="dimas@example.com" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border-transparent focus:border-primary-500 focus:ring-0 text-gray-900 dark:text-white">
+                            </div>
+                            <div class="flex items-center justify-between py-4 border-t border-gray-100 dark:border-gray-700">
+                                <div>
+                                    <h4 class="font-bold dark:text-white">Notifikasi Email</h4>
+                                    <p class="text-xs text-gray-500">Terima update harian tentang tugas.</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
+                                </label>
+                            </div>
+                            <button class="w-full py-3 rounded-xl bg-primary-500 text-white font-bold shadow-glow hover:bg-primary-600 trans-all">Simpan Perubahan</button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Logic Javascript -->
+    <script>
+        // --- Dark Mode ---
+        const html = document.documentElement;
+        const themeIcon = document.getElementById('themeIcon');
+        
+        function toggleDarkMode() {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+                themeIcon.classList.replace('ph-sun', 'ph-moon');
+            } else {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+                themeIcon.classList.replace('ph-moon', 'ph-sun');
+            }
+            if(window.myChart) updateChartTheme();
+        }
+
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+            themeIcon.classList.replace('ph-moon', 'ph-sun');
+        }
+
+        // --- Sidebar Mobile ---
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        let isSidebarOpen = false;
+
+        function toggleSidebar() {
+            isSidebarOpen = !isSidebarOpen;
+            if (isSidebarOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        // --- PAGE SWITCHING LOGIC (SPA) ---
+        
+        // Define styles for Active vs Inactive menu items
+        const activeClasses = ['bg-primary-50', 'text-primary-600', 'dark:bg-primary-500/10', 'dark:text-primary-400'];
+        const inactiveClasses = ['text-gray-500', 'hover:bg-gray-50', 'dark:text-gray-400', 'dark:hover:bg-gray-800', 'hover:text-primary-600', 'dark:hover:text-primary-400'];
+
+        // Titles for the header based on page
+        const pageTitles = {
+            'dashboard': { title: 'Halo, Dimas! 👋', subtitle: 'Berikut ringkasan aktivitas produktivitas Anda hari ini.' },
+            'tasks': { title: 'Tugas Saya', subtitle: 'Kelola semua tugas dan deadline Anda di sini.' },
+            'calendar': { title: 'Kalender', subtitle: 'Jadwal dan agenda penting bulan ini.' },
+            'analytics': { title: 'Analitik', subtitle: 'Statistik performa dan efisiensi kerja.' },
+            'team': { title: 'Tim Project', subtitle: 'Anggota tim yang berkolaborasi dengan Anda.' },
+            'settings': { title: 'Pengaturan', subtitle: 'Atur preferensi akun dan tampilan.' }
+        };
+
+        function switchPage(pageId, element) {
+            // 1. Hide all pages
+            document.querySelectorAll('.page-section').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            // 2. Show selected page
+            const targetPage = document.getElementById('page-' + pageId);
+            if(targetPage) {
+                targetPage.classList.remove('hidden');
+                // Re-trigger animation
+                targetPage.classList.remove('animate-fade-in');
+                void targetPage.offsetWidth; // trigger reflow
+                targetPage.classList.add('animate-fade-in');
+            }
+
+            // 3. Update Sidebar Styles
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                // Reset to inactive
+                nav.classList.remove(...activeClasses);
+                nav.classList.add(...inactiveClasses);
+                // Reset icon color (if using inline styles or specific classes logic, handle here. 
+                // Currently Phosphor icons inherit text color, so class swap is enough)
+            });
+
+            // Set Active Style to clicked element
+            if(element) {
+                element.classList.remove(...inactiveClasses);
+                element.classList.add(...activeClasses);
+            }
+
+            // 4. Update Headers
+            const headerData = pageTitles[pageId];
+            if(headerData) {
+                document.getElementById('header-content').innerHTML = `
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">${headerData.title}</h2>
+                    <p class="text-gray-500 dark:text-dark-muted mt-1">${headerData.subtitle}</p>
+                `;
+                document.getElementById('mobile-page-title').innerText = pageId.charAt(0).toUpperCase() + pageId.slice(1);
+            }
+
+            // 5. Close sidebar on mobile if open
+            if(window.innerWidth < 1024 && isSidebarOpen) {
+                toggleSidebar();
+            }
+        }
+
+        // --- Chart.js ---
+        const ctx = document.getElementById('productivityChart').getContext('2d');
+        let myChart;
+
+        function initChart() {
+            const isDark = html.classList.contains('dark');
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            
+            let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(73, 0, 199, 0.4)');
+            gradient.addColorStop(1, 'rgba(73, 0, 199, 0)');
+
+            const config = {
+                type: 'line',
+                data: {
+                    labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                    datasets: [{
+                        label: 'Tugas Selesai',
+                        data: [4, 6, 8, 5, 10, 8, 12],
+                        backgroundColor: gradient,
+                        borderColor: '#4900c7',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#4900c7',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: gridColor, borderDash: [5, 5], drawBorder: false }, ticks: { color: textColor } },
+                        x: { grid: { display: false }, ticks: { color: textColor } }
+                    }
+                }
+            };
+
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, config);
+        }
+
+        initChart();
+        function updateChartTheme() { initChart(); }
+
+    </script>
+</body>
+</html>
