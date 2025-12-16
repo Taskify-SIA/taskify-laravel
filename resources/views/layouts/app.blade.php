@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" href="{{ asset('icon.png') }}" type="image/png">
+    {{-- PWA --}}
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="theme-color" content="#4900c7">
     {{-- Icon Apple --}}
     <link rel="apple-touch-icon" href="{{ asset('icon.png') }}" type="image/png">
     <title>{{ config('app.name', 'Taskify')  }} - @yield('title')</title>
@@ -167,6 +170,12 @@
                     <i class="ph-duotone ph-gear text-xl group-hover:scale-110 trans-all"></i>
                     Pengaturan
                 </a>
+                
+                {{-- PWA Install Button --}}
+                <button id="pwa-install-button" onclick="installPWA()" class="nav-item w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 font-medium trans-all group" style="display: none;">
+                    <i class="ph-duotone ph-download text-xl group-hover:scale-110 trans-all"></i>
+                    Install App
+                </button>
             </nav>
 
             <div class="p-6 border-t border-gray-100 dark:border-gray-800">
@@ -269,5 +278,93 @@
     @include('components.modal-logout')
     
     @stack('scripts')
+    
+    {{-- PWA Service Worker Registration --}}
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered successfully:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+        
+        // PWA Install Handler
+        let deferredPrompt;
+        let installButton = null;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('PWA install prompt available');
+            
+            // Show install button if exists
+            if (installButton) {
+                installButton.style.display = 'flex';
+            }
+            const installButtonTop = document.getElementById('pwa-install-button-top');
+            if (installButtonTop) {
+                installButtonTop.style.display = 'block';
+            }
+        });
+        
+        // Check if already installed
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed');
+            deferredPrompt = null;
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
+            const installButtonTop = document.getElementById('pwa-install-button-top');
+            if (installButtonTop) {
+                installButtonTop.style.display = 'none';
+            }
+        });
+        
+        // Function to install PWA
+        window.installPWA = function() {
+            if (!deferredPrompt) {
+                alert('Aplikasi sudah terinstall atau tidak tersedia untuk diinstall.');
+                return;
+            }
+            
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                deferredPrompt = null;
+                if (installButton) {
+                    installButton.style.display = 'none';
+                }
+                const installButtonTop = document.getElementById('pwa-install-button-top');
+                if (installButtonTop) {
+                    installButtonTop.style.display = 'none';
+                }
+            });
+        };
+        
+        // Initialize install button after DOM loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            installButton = document.getElementById('pwa-install-button');
+            const installButtonTop = document.getElementById('pwa-install-button-top');
+            
+            // Check if already installed
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                if (installButton) installButton.style.display = 'none';
+                if (installButtonTop) installButtonTop.style.display = 'none';
+            } else if (deferredPrompt) {
+                // Show buttons if prompt available
+                if (installButton) installButton.style.display = 'flex';
+                if (installButtonTop) installButtonTop.style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>

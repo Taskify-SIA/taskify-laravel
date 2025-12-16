@@ -16,6 +16,10 @@
             <i id="themeIcon" class="ph-bold ph-moon"></i>
         </button>
         
+        <button id="pwa-install-button-top" onclick="installPWA()" class="px-4 py-3 rounded-2xl bg-white dark:bg-dark-card shadow-soft border border-gray-100 dark:border-gray-700 text-gray-500 hover:text-primary-500 trans-all" style="display: none;" title="Install App">
+            <i class="ph-bold ph-download"></i>
+        </button>
+        
         <a href="{{ route('tasks.create') }}" class="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-2xl font-semibold shadow-glow trans-all transform hover:-translate-y-1">
             <i class="ph-bold ph-plus"></i>
             <span class="hidden sm:inline">Tugas Baru</span>

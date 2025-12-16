@@ -16,23 +16,28 @@
             <i id="themeIcon" class="ph-bold ph-moon"></i>
         </button>
         
-        <select class="px-4 py-3 rounded-2xl bg-white dark:bg-dark-card shadow-soft border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-white focus:border-primary-500 focus:ring-0 font-medium">
-            <option>7 Hari Terakhir</option>
-            <option>30 Hari Terakhir</option>
-            <option>3 Bulan Terakhir</option>
-        </select>
+        <form action="{{ route('analytics.index') }}" method="GET" class="flex items-center gap-2">
+            <input type="hidden" name="range" id="range-input" value="{{ $range }}">
+            <div class="px-1 py-1 rounded-2xl bg-white dark:bg-dark-card shadow-soft border border-gray-100 dark:border-gray-700 flex">
+                <button type="submit" onclick="document.getElementById('range-input').value='7d';" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold
+                    {{ $range === '7d' ? 'bg-primary-500 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                    7 Hari
+                </button>
+                <button type="submit" onclick="document.getElementById('range-input').value='30d';" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold
+                    {{ $range === '30d' ? 'bg-primary-500 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                    30 Hari
+                </button>
+                <button type="submit" onclick="document.getElementById('range-input').value='3m';" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold
+                    {{ $range === '3m' ? 'bg-primary-500 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                    3 Bulan
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 <!-- Stats Overview -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-    @php
-        $totalTasks = Auth::user()->tasks()->count();
-        $completedTasks = Auth::user()->tasks()->where('is_completed', true)->count();
-        $inProgressTasks = Auth::user()->tasks()->where('status', 'in_progress')->count();
-        $completionRate = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
-    @endphp
-    
     <div class="bg-white dark:bg-dark-card p-6 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800">
         <div class="flex items-center justify-between mb-4">
             <div class="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500">
@@ -42,7 +47,7 @@
                 <i class="ph-bold ph-trend-up"></i> +12%
             </span>
         </div>
-        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Tugas</p>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Tugas ({{ $label }})</p>
         <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ $totalTasks }}</h3>
     </div>
 
@@ -55,7 +60,7 @@
                 <i class="ph-bold ph-trend-up"></i> +8%
             </span>
         </div>
-        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Selesai</p>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Selesai ({{ $label }})</p>
         <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ $completedTasks }}</h3>
     </div>
 
@@ -68,7 +73,7 @@
                 <i class="ph-bold ph-minus"></i> -2%
             </span>
         </div>
-        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">In Progress</p>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">In Progress ({{ $label }})</p>
         <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ $inProgressTasks }}</h3>
     </div>
 
@@ -81,7 +86,7 @@
                 <i class="ph-bold ph-trend-up"></i> +5%
             </span>
         </div>
-        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Completion Rate</p>
+        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Completion Rate ({{ $label }})</p>
         <h3 class="text-3xl font-bold text-gray-900 dark:text-white mt-1">{{ $completionRate }}%</h3>
     </div>
 </div>
@@ -104,10 +109,6 @@
 <!-- Team Performance -->
 <div class="bg-white dark:bg-dark-card p-8 rounded-[2rem] shadow-soft border border-gray-100 dark:border-gray-800">
     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Performa Tim</h3>
-    
-    @php
-        $teamMembers = Auth::user()->teamMembers()->withCount('tasks')->get();
-    @endphp
     
     <div class="space-y-4">
         @forelse($teamMembers as $member)
@@ -144,10 +145,10 @@
     new Chart(ctxCompletion, {
         type: 'bar',
         data: {
-            labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+            labels: @json($labels),
             datasets: [{
-                label: 'Tugas Selesai',
-                data: [3, 5, 4, 6, 8, 5, 7],
+                label: 'Tugas Selesai ({{ $label }})',
+                data: @json($completionData),
                 backgroundColor: '#4900c7',
                 borderRadius: 8,
             }]
@@ -170,9 +171,7 @@
         data: {
             labels: ['High', 'Medium', 'Low'],
             datasets: [{
-                data: [{{ Auth::user()->tasks()->where('priority', 'high')->count() }}, 
-                       {{ Auth::user()->tasks()->where('priority', 'medium')->count() }}, 
-                       {{ Auth::user()->tasks()->where('priority', 'low')->count() }}],
+                data: [{{ $highPriority }}, {{ $mediumPriority }}, {{ $lowPriority }}],
                 backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6'],
                 borderWidth: 0,
             }]
